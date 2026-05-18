@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+  SQUARESPACE EMBEDDING:
+  Host this file (e.g. on GitHub Pages, Netlify, or your own server)
+  then embed with a Code Block in Squarespace:
+
+  <iframe src="YOUR-URL/careers-explorer.html"
+          style="width:100%;height:750px;border:none;"
+          loading="lazy"
+          title="Sustainable Technology Careers Explorer">
+  </iframe>
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Sustainable Technology Careers Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Design Tokens ── */
+:root {
+  --green-900: #1A5632;
+  --green-700: #22753F;
+  --green-500: #2D9B52;
+  --green-300: #6FCF8D;
+  --green-100: #C8F0D4;
+  --green-50:  #F0FBF4;
+  --neutral-900: #1B1B28;
+  --neutral-700: #3A3A4A;
+  --neutral-300: #B0B0BC;
+  --neutral-100: #E8E8EC;
+  --neutral-50:  #FAFAFA;
+  --bubble-size: 88px;
+  --expanded-w: 272px;
+  --expanded-h: 340px;
+  --border-w: 3px;
+  --font-body: 'Work Sans', system-ui, -apple-system, sans-serif;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-body);
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ── */
+#careers-explorer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 550px;
+  background: radial-gradient(ellipse at 50% 40%, #ffffff 0%, var(--green-50) 100%);
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+/* ── Header ── */
+#header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 18px 20px 28px;
+  z-index: 200;
+  pointer-events: none;
+  user-select: none;
+}
+#header h1 {
+  font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+  font-weight: 700;
+  color: var(--green-900);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+#header p {
+  font-size: clamp(0.72rem, 1.4vw, 0.88rem);
+  color: var(--neutral-700);
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+/* ── Bubble Container ── */
+#bubble-container {
+  position: absolute;
+  inset: 0;
+}
+
+/* ── Category Title Bubbles ── */
+.cat-bubble {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: 50%;
+  background: rgba(240, 251, 244, 0.92);
+  border: 2px solid var(--green-300);
+  font-size: clamp(0.52rem, 1vw, 0.7rem);
+  font-weight: 700;
+  color: var(--green-900);
+  pointer-events: none;
+  user-select: none;
+  z-index: 3;
+  will-change: transform;
+  line-height: 1.15;
+  overflow: hidden;
+  padding: 4px;
+  overflow-wrap: break-word;
+  transform: translate(-50%, -50%);
+  backdrop-filter: blur(2px);
+}
+
+/* ── Bubble Wrapper (positioned by JS) ── */
+.bw {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  will-change: transform;
+}
+.bw.is-expanded {
+  z-index: 500;
+}
+
+/* ── Bubble ── */
+.bubble {
+  position: relative;
+  width: var(--bubble-size);
+  height: var(--bubble-size);
+  border-radius: 50%;
+  border: var(--border-w) solid var(--green-700);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--green-50);
+  display: flex;
+  flex-direction: column;
+  scale: 1;
+  transition:
+    width 0.42s cubic-bezier(0.34, 1.56, 0.64, 1),
+    height 0.42s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-radius 0.32s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    scale 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.bubble.expanded {
+  width: var(--expanded-w);
+  height: var(--expanded-h);
+  border-radius: 18px;
+  border-color: var(--green-700);
+  box-shadow: 0 12px 48px rgba(26, 86, 50, 0.22), 0 2px 12px rgba(0,0,0,0.08);
+}
+
+/* ── Bubble Image ── */
+.bubble-img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex-shrink: 0;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+  transition: height 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: var(--cat-bg, linear-gradient(135deg, var(--green-300), var(--green-500)));
+}
+.bubble.expanded .bubble-img {
+  height: 130px;
+  border-radius: 0;
+}
+
+/* ── Bubble Content ── */
+.bubble-content {
+  flex: 1;
+  padding: 0;
+  opacity: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: opacity 0.25s ease, padding 0.35s ease;
+  min-height: 0;
+}
+.bubble.expanded .bubble-content {
+  padding: 12px 16px 14px;
+  opacity: 1;
+  transition-delay: 0.12s;
+}
+
+.bubble-content h3 {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--green-900);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.bubble-content .desc {
+  font-size: 0.73rem;
+  color: var(--neutral-700);
+  line-height: 1.45;
+  flex: 1;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+.bubble-content .meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+.meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.meta-tag.salary {
+  background: var(--green-100);
+  color: var(--green-900);
+}
+.meta-tag.edu {
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+}
+
+/* ── Close Button ── */
+.close-btn {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.85);
+  color: var(--neutral-700);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+  transition: background 0.2s;
+}
+.close-btn:hover { background: rgba(255,255,255,1); }
+.bubble.expanded .close-btn { display: flex; }
+
+/* ── Name Overlay (shown on desktop hover) ── */
+.bubble-name {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6%;
+  font-size: clamp(0.58rem, 1.1vw, 0.8rem);
+  font-weight: 600;
+  color: #fff;
+  background: rgba(26, 86, 50, 0.6);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  line-height: 1.15;
+  overflow: hidden;
+  word-break: break-word;
+  z-index: 2;
+  font-family: var(--font-body);
+}
+.bubble.expanded .bubble-name { display: none; }
+
+/* ── Desktop Hover Effects ── */
+@media (hover: hover) {
+  .bw:not(.is-expanded):hover {
+    z-index: 100;
+  }
+  .bubble:not(.expanded):hover {
+    border-color: var(--green-500);
+    box-shadow: 0 4px 20px rgba(45, 155, 82, 0.22);
+    scale: 1.22;
+  }
+  .bubble:not(.expanded):hover .bubble-name {
+    opacity: 1;
+  }
+}
+
+/* ── Overlay when expanded ── */
+#overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.35);
+  z-index: 400;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(1px);
+}
+#overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── Float Animation ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+.bubble:not(.expanded) {
+  animation: float 5s ease-in-out infinite;
+}
+.bubble.expanded {
+  animation: none;
+}
+
+/* ── Mobile ── */
+@media (max-width: 600px) {
+  #header { padding: 12px 16px 20px; }
+  .bubble-name { display: none; }
+  .bubble.expanded .bubble-img { height: 100px; }
+  .bubble-content .desc {
+    -webkit-line-clamp: 3;
+    font-size: 0.7rem;
+  }
+  .bubble-content h3 { font-size: 0.82rem; }
+  .cat-bubble { font-size: 0.38rem; }
+}
+
+/* ── Accessibility ── */
+.bubble:focus-visible {
+  outline: 3px solid var(--green-500);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bubble, .bubble-img, .bubble-content, #overlay {
+    transition-duration: 0.01ms !important;
+    animation: none !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div id="careers-explorer">
+  <header id="header">
+    <h1>Sustainable Technology Careers</h1>
+  </header>
+  <div id="overlay"></div>
+  <div id="bubble-container"></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ════════════════════════════════════════════
+     Career Data
+     ════════════════════════════════════════════
+     To swap images: replace the `img` value with any direct image URL.
+     Recommended free sources: unsplash.com, pexels.com, pixabay.com
+     Image format: 300×300 or larger, square crop preferred.
+  */
+  var U = 'https://images.unsplash.com/photo-';
+  var Q = '?w=300&h=300&fit=crop&crop=center';
+  var careers = [
+    { title:'Agroforester', desc:'Designs farming systems that integrate trees and crops, building more resilient and productive landscapes.', salary:'$45K–$65K', edu:"Bachelor's", cat:'food', img:U+'1500382017468-9049fed747ef'+Q },
+    { title:'Air Quality Forecaster', desc:'Predicts pollution levels and issues health advisories to protect communities from poor air quality.', salary:'$55K–$80K', edu:"Bachelor's", cat:'computing', img:U+'1413882353314-73389f63b6fd'+Q },
+    { title:'Aquarist', desc:'Manages aquatic habitats in aquariums and research facilities, caring for marine and freshwater species.', salary:'$30K–$45K', edu:"Associate's", cat:'water', img:U+'1522069169874-c58ec4b76be5'+Q },
+    { title:'Aquatic Biologist', desc:'Studies freshwater and marine ecosystems to understand species health, water quality, and habitat restoration.', salary:'$50K–$75K', edu:"Bachelor's", cat:'water', img:U+'1504472478235-9bc48ba4d60f'+Q },
+    { title:'Biofuel Production Operator', desc:'Operates equipment that converts organic materials into renewable fuels like ethanol and biodiesel.', salary:'$40K–$60K', edu:"Associate's", cat:'energy', img:U+'1658298775754-5839ffd434cc'+Q },
+    { title:'Building Energy Auditor', desc:'Inspects buildings to identify energy waste and recommends insulation, HVAC, and lighting improvements.', salary:'$42K–$68K', edu:"Associate's", cat:'buildings', img:U+'1504307651254-35680f356dfd'+Q },
+    { title:'Chemical Engineer', desc:'Develops processes for manufacturing chemicals, fuels, and materials with a focus on efficiency and sustainability.', salary:'$75K–$110K', edu:"Bachelor's", cat:'transportation', img:U+'1608037222022-62649819f8aa'+Q },
+    { title:'Climate Risk Analyst', desc:'Assesses how climate change affects businesses and communities, helping them plan and adapt for future risks.', salary:'$65K–$105K', edu:"Bachelor's", cat:'computing', img:U+'1551288049-bebda4e38f71'+Q },
+    { title:'Director of Sustainability', desc:'Leads an organization\'s sustainability strategy, setting goals for energy use, waste reduction, and carbon targets.', salary:'$90K–$140K', edu:"Bachelor's", cat:'buildings', img:U+'1573164713714-d95e436ab8d6'+Q },
+    { title:'Ecotourism Guide', desc:'Leads educational outdoor adventures that promote conservation awareness and protect natural habitats.', salary:'$28K–$45K', edu:'HS Diploma', cat:'food', img:U+'1551632811-561732d1e306'+Q },
+    { title:'Electric Vehicle Technician', desc:'Diagnoses, repairs, and maintains electric and hybrid vehicles as the transportation sector electrifies.', salary:'$40K–$65K', edu:"Associate's", cat:'transportation', img:U+'1593941707882-a5bba14938c7'+Q },
+    { title:'Energy Manager', desc:'Oversees energy use in buildings and facilities, implementing efficiency upgrades and renewable energy systems.', salary:'$70K–$105K', edu:"Bachelor's", cat:'energy', img:U+'1497435334941-8c899ee9e8e9'+Q },
+    { title:'Environmental Compliance Officer', desc:'Ensures organizations follow environmental laws covering air quality, hazardous waste, and water discharge.', salary:'$55K–$88K', edu:"Bachelor's", cat:'transportation', img:'https://plus.unsplash.com/premium_photo-1664478317691-151d74203b55'+Q },
+    { title:'Environmental Data Analyst', desc:'Uses data science to track emissions, model climate impacts, and measure sustainability progress.', salary:'$55K–$88K', edu:"Bachelor's", cat:'computing', img:U+'1509391111737-9b07f052f6b6'+Q },
+    { title:'Environmental PR Specialist', desc:'Communicates sustainability initiatives to the public through media campaigns, events, and storytelling.', salary:'$48K–$75K', edu:"Bachelor's", cat:'computing', img:U+'1624397640148-949b1732bb0a'+Q },
+    { title:'Geophysical Engineer', desc:'Uses technology to study Earth\'s subsurface for resource exploration, construction, and natural hazard assessment.', salary:'$72K–$115K', edu:"Bachelor's", cat:'transportation', img:U+'1635335874521-7987db781153'+Q },
+    { title:'Geoscientist', desc:'Investigates Earth processes like erosion, volcanic activity, and groundwater flow to inform resource management.', salary:'$63K–$100K', edu:"Bachelor's", cat:'computing', img:U+'1650275140229-21de2424fbd5'+Q },
+    { title:'Green Building Inspector', desc:'Evaluates construction projects for energy efficiency, sustainable materials, and building code compliance.', salary:'$45K–$72K', edu:"Associate's", cat:'buildings', img:U+'1486406146926-c627a92ad1ab'+Q },
+    { title:'Hydrographic Surveyor', desc:'Maps ocean and lake floors using sonar and GPS to support navigation, construction, and resource management.', salary:'$55K–$82K', edu:"Associate's", cat:'water', img:U+'1569918190173-6a5792908184'+Q },
+    { title:'Landscape Architect', desc:'Designs outdoor spaces — parks, campuses, green infrastructure — that balance beauty, function, and ecology.', salary:'$58K–$95K', edu:"Bachelor's", cat:'buildings', img:U+'1501554728187-ce583db33af7'+Q },
+    { title:'Nuclear Engineer', desc:'Designs and maintains nuclear power systems, one of the largest sources of carbon-free electricity worldwide.', salary:'$80K–$125K', edu:"Bachelor's", cat:'energy', img:U+'1473341304170-971dccb5ac1e'+Q },
+    { title:'Petroleum Engineer', desc:'Optimizes energy extraction while developing cleaner methods and supporting the transition to renewables.', salary:'$85K–$135K', edu:"Bachelor's", cat:'energy', img:U+'1504250746301-659b6b611c48'+Q },
+    { title:'Petrologist', desc:'Studies the origin and composition of rocks to support mining, construction, and geological research.', salary:'$58K–$90K', edu:"Bachelor's", cat:'computing', img:U+'1675020377606-ab5ed5766c00'+Q },
+    { title:'Recycling Process Engineer', desc:'Designs systems that sort, process, and reclaim materials from waste streams for reuse in manufacturing.', salary:'$60K–$92K', edu:"Bachelor's", cat:'buildings', img:U+'1653406384710-08688ec6b979'+Q },
+    { title:'Smart Grid Analyst', desc:'Monitors and optimizes electrical grid performance using data analytics and IoT sensor networks.', salary:'$65K–$98K', edu:"Bachelor's", cat:'energy', img:U+'1509390144018-eeaf65052242'+Q },
+    { title:'Soil Conservation Technician', desc:'Works with landowners to prevent erosion, improve soil health, and protect surrounding waterways.', salary:'$35K–$55K', edu:"Associate's", cat:'food', img:U+'1568454537842-d933259bb258'+Q },
+    { title:'Solar Engineer', desc:'Designs photovoltaic and solar thermal systems for residential, commercial, and utility-scale energy production.', salary:'$72K–$108K', edu:"Bachelor's", cat:'energy', img:U+'1509391366360-2e959784a276'+Q },
+    { title:'Stormwater Management Technician', desc:'Installs and maintains green infrastructure like rain gardens and permeable pavement to manage urban runoff.', salary:'$36K–$58K', edu:"Associate's", cat:'water', img:U+'1533077162801-86490c593afb'+Q },
+    { title:'Sustainable Food Systems Manager', desc:'Coordinates sustainable sourcing, reduces food waste, and builds local supply chains for institutions and businesses.', salary:'$50K–$80K', edu:"Bachelor's", cat:'food', img:U+'1597120590849-a1d5a743d155'+Q },
+    { title:'Sustainable Supply Chain Analyst', desc:'Evaluates supply chains for environmental and social impact, finding ways to reduce carbon footprint and waste.', salary:'$55K–$85K', edu:"Bachelor's", cat:'transportation', img:U+'1594535182308-8ffefbb661e1'+Q },
+    { title:'Sustainability Program Coordinator', desc:'Manages day-to-day sustainability programs including recycling, energy tracking, and community outreach.', salary:'$48K–$72K', edu:"Bachelor's", cat:'buildings', img:U+'1521618755572-156ae0cdd74d'+Q },
+    { title:'Sustainability Specialist', desc:'Analyzes an organization\'s environmental impact and recommends improvements across all operations.', salary:'$52K–$78K', edu:"Bachelor's", cat:'computing', img:U+'1451976426598-a7593bd6d0b2'+Q },
+    { title:'Turf Scientist', desc:'Researches grass and soil science to maintain healthy, water-efficient landscapes for sports fields and parks.', salary:'$45K–$72K', edu:"Bachelor's", cat:'food', img:U+'1600807497639-3b5d8e74a232'+Q },
+    { title:'Urban Planner', desc:'Shapes the development of cities and towns, designing walkable, transit-friendly, and environmentally sustainable communities.', salary:'$52K–$85K', edu:"Bachelor's", cat:'transportation', img:U+'1449824913935-59a10b8d2000'+Q },
+    { title:'Waste Reduction Engineer', desc:'Designs systems to minimize waste in manufacturing and municipal operations through recycling and process redesign.', salary:'$62K–$92K', edu:"Bachelor's", cat:'buildings', img:'https://plus.unsplash.com/premium_photo-1679607581922-ba5c2558669b'+Q },
+    { title:'Water Resource Engineer', desc:'Designs systems for water supply, flood control, and irrigation that balance human needs with ecosystem health.', salary:'$65K–$102K', edu:"Bachelor's", cat:'water', img:U+'1606050309588-741702cceb9b'+Q },
+    { title:'Water Treatment Operator', desc:'Runs equipment at water and wastewater plants that keeps drinking water safe and waterways clean.', salary:'$38K–$62K', edu:"Associate's", cat:'water', img:U+'1518837695005-2083093ee35b'+Q },
+    { title:'Watershed Manager', desc:'Protects entire drainage basins by coordinating land use, monitoring water quality, and restoring riparian areas.', salary:'$55K–$88K', edu:"Bachelor's", cat:'water', img:U+'1470071459604-3b5ec3a7fe05'+Q },
+    { title:'Watershed Science Technician', desc:'Collects field data on water flow, soil conditions, and vegetation to support watershed management plans.', salary:'$35K–$55K', edu:"Associate's", cat:'food', img:U+'1526599256864-6bedb9d7dfb5'+Q },
+    { title:'Wetland Specialist', desc:'Assesses and restores wetland habitats that filter water, store carbon, and support biodiversity.', salary:'$50K–$78K', edu:"Bachelor's", cat:'food', img:U+'1441974231531-c6227db76b6e'+Q },
+    { title:'Wind Energy Engineer', desc:'Designs and optimizes wind turbine systems from individual rooftop units to large-scale offshore wind farms.', salary:'$75K–$112K', edu:"Bachelor's", cat:'energy', img:U+'1548337138-e87d889cc369'+Q },
+    { title:'Zoning Technician', desc:'Reviews land-use plans and permits to ensure development follows environmental and community regulations.', salary:'$40K–$62K', edu:"Associate's", cat:'transportation', img:U+'1597502310092-31cdaa35b46d'+Q }
+  ];
+
+  /* ── Category Config ── */
+  var CAT_ORDER = ['energy','water','food','buildings','transportation','computing'];
+  var CAT_LABELS = {
+    energy:         'Energy',
+    water:          'Water',
+    food:           'Food',
+    buildings:      'Buildings',
+    transportation: 'Transportation',
+    computing:      'Computing'
+  };
+  var catGradients = {
+    energy:         'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+    water:          'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)',
+    food:           'linear-gradient(135deg, #4ade80 0%, #16a34a 100%)',
+    buildings:      'linear-gradient(135deg, #94a3b8 0%, #475569 100%)',
+    transportation: 'linear-gradient(135deg, #fb923c 0%, #ea580c 100%)',
+    computing:      'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)'
+  };
+
+  /* ── Dynamic Sizing ── */
+  var NORMAL_R, HOVER_R, CAT_R, EXPANDED_R, PAD = 3;
+  var catCenters = {};
+  var catBubbleEls = {};
+  var hasHover = window.matchMedia('(hover: hover)').matches;
+
+  function calcSizes(w, h) {
+    var vmin = Math.min(w, h);
+    NORMAL_R = Math.max(24, Math.round(vmin / 15));
+    HOVER_R = Math.round(NORMAL_R * 1.22);
+    CAT_R = Math.max(24, Math.round(NORMAL_R * 0.7));
+    EXPANDED_R = Math.min(160, Math.round(NORMAL_R * 3.5));
+    var bsize = NORMAL_R * 2;
+    var expW = Math.min(300, Math.max(240, Math.round(NORMAL_R * 5.5)));
+    var expH = Math.min(370, Math.max(300, Math.round(NORMAL_R * 7)));
+    document.documentElement.style.setProperty('--bubble-size', bsize + 'px');
+    document.documentElement.style.setProperty('--expanded-w', expW + 'px');
+    document.documentElement.style.setProperty('--expanded-h', expH + 'px');
+  }
+
+  function layoutCatCenters(w, h) {
+    var cx = w / 2;
+    var cy = h / 2;
+    var rx = w * 0.38;
+    var ry = h * 0.36;
+    var n = CAT_ORDER.length;
+    CAT_ORDER.forEach(function(cat, i) {
+      var angle = (2 * Math.PI * i / n) - Math.PI / 2;
+      catCenters[cat] = {
+        x: cx + rx * Math.cos(angle),
+        y: cy + ry * Math.sin(angle)
+      };
+    });
+  }
+
+  /* ── State ── */
+  var nodes = [];
+  var expandedNode = null;
+  var running = false;
+  var settled = false;
+  var width, height, centerX, centerY;
+  var container = document.getElementById('bubble-container');
+  var overlay   = document.getElementById('overlay');
+
+  /* ── Create Category Title Bubbles ── */
+  function createCatBubbles() {
+    CAT_ORDER.forEach(function(cat) {
+      var el = document.createElement('div');
+      el.className = 'cat-bubble';
+      el.textContent = CAT_LABELS[cat];
+      var size = CAT_R * 2;
+      el.style.width = size + 'px';
+      el.style.height = size + 'px';
+      container.appendChild(el);
+      catBubbleEls[cat] = el;
+    });
+  }
+
+  function updateCatBubbles() {
+    CAT_ORDER.forEach(function(cat) {
+      var cc = catCenters[cat];
+      var el = catBubbleEls[cat];
+      var size = CAT_R * 2;
+      el.style.width = size + 'px';
+      el.style.height = size + 'px';
+      el.style.transform = 'translate(' + cc.x.toFixed(0) + 'px,' + cc.y.toFixed(0) + 'px) translate(-50%, -50%)';
+    });
+  }
+
+  /* ── Create Bubble DOM ── */
+  function createBubble(career, index) {
+    var wrapper = document.createElement('div');
+    wrapper.className = 'bw';
+    wrapper.setAttribute('data-title', career.title);
+
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.setAttribute('role', 'button');
+    bubble.setAttribute('tabindex', '0');
+    bubble.setAttribute('aria-label', career.title);
+    bubble.style.animationDelay = (index * 0.13 % 5).toFixed(2) + 's';
+
+    var img = document.createElement('img');
+    img.className = 'bubble-img';
+    img.src = career.img;
+    img.alt = career.title;
+    img.loading = 'lazy';
+    img.draggable = false;
+    img.style.background = catGradients[career.cat] || catGradients.land;
+    img.onerror = function() { this.style.display = 'none'; };
+
+    var content = document.createElement('div');
+    content.className = 'bubble-content';
+    content.innerHTML =
+      '<h3>' + career.title + '</h3>' +
+      '<p class="desc">' + career.desc + '</p>' +
+      '<div class="meta">' +
+        '<span class="meta-tag salary">' + career.salary + '</span>' +
+        '<span class="meta-tag edu">' + career.edu + '</span>' +
+      '</div>';
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'close-btn';
+    closeBtn.setAttribute('aria-label', 'Close');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      collapseExpanded();
+    });
+
+    var nameOverlay = document.createElement('span');
+    nameOverlay.className = 'bubble-name';
+    nameOverlay.textContent = career.title;
+
+    bubble.appendChild(img);
+    bubble.appendChild(nameOverlay);
+    bubble.appendChild(content);
+    bubble.appendChild(closeBtn);
+    wrapper.appendChild(bubble);
+    container.appendChild(wrapper);
+
+    return { el: wrapper, bubble: bubble, career: career };
+  }
+
+  /* ── Initialize Nodes ── */
+  function initNodes() {
+    var rect = container.getBoundingClientRect();
+    width   = rect.width;
+    height  = rect.height;
+    centerX = width / 2;
+    centerY = height / 2;
+
+    calcSizes(width, height);
+    layoutCatCenters(width, height);
+    createCatBubbles();
+    updateCatBubbles();
+
+    nodes = careers.map(function(career, i) {
+      var cc = catCenters[career.cat];
+      var angle = Math.random() * Math.PI * 2;
+      var r = Math.random() * NORMAL_R * 3.5;
+      var x = cc.x + r * Math.cos(angle);
+      var y = cc.y + r * Math.sin(angle);
+
+      var n = createBubble(career, i);
+      n.x  = Math.max(NORMAL_R, Math.min(width - NORMAL_R, x));
+      n.y  = Math.max(NORMAL_R + 50, Math.min(height - NORMAL_R, y));
+      n.vx = 0;
+      n.vy = 0;
+      n.radius = NORMAL_R;
+      n.targetRadius = NORMAL_R;
+      n.expanded = false;
+      return n;
+    });
+
+    updatePositions();
+  }
+
+  /* ── Physics ── */
+  function simulate() {
+    if (!running) return;
+
+    var totalV = 0;
+    var i, j, node, other, dx, dy, dist, minDist, force, nx, ny;
+    var len = nodes.length;
+
+    for (i = 0; i < len; i++) {
+      node = nodes[i];
+
+      /* Smooth radius transition */
+      node.radius += (node.targetRadius - node.radius) * 0.12;
+
+      /* Per-category center gravity */
+      var cc = catCenters[node.career.cat];
+      dx = cc.x - node.x;
+      dy = cc.y - node.y;
+      node.vx += dx * 0.0012;
+      node.vy += dy * 0.0012;
+
+      /* Weak global center pull (keeps everything from drifting) */
+      dx = centerX - node.x;
+      dy = centerY - node.y;
+      node.vx += dx * 0.00008;
+      node.vy += dy * 0.00008;
+
+      /* Collision + repulsion */
+      for (j = i + 1; j < len; j++) {
+        other = nodes[j];
+        dx = node.x - other.x;
+        dy = node.y - other.y;
+        dist = Math.sqrt(dx * dx + dy * dy);
+        minDist = node.radius + other.radius + PAD;
+
+        if (dist < minDist * 2.0 && dist > 0.1) {
+          nx = dx / dist;
+          ny = dy / dist;
+          if (dist < minDist) {
+            force = (minDist - dist) * 0.12;
+          } else {
+            force = 0.3 / (dist * dist) * minDist;
+          }
+          node.vx  += nx * force;
+          node.vy  += ny * force;
+          other.vx -= nx * force;
+          other.vy -= ny * force;
+        }
+      }
+
+      /* Category bubble collision (fixed position, push career nodes away) */
+      var catKeys = CAT_ORDER;
+      for (j = 0; j < catKeys.length; j++) {
+        var ccPos = catCenters[catKeys[j]];
+        dx = node.x - ccPos.x;
+        dy = node.y - ccPos.y;
+        dist = Math.sqrt(dx * dx + dy * dy);
+        minDist = node.radius + CAT_R + PAD;
+        if (dist < minDist && dist > 0.1) {
+          nx = dx / dist;
+          ny = dy / dist;
+          force = (minDist - dist) / dist * 0.4;
+          node.vx += nx * force;
+          node.vy += ny * force;
+        }
+      }
+
+      /* Boundary */
+      var margin = node.radius + 4;
+      var topMargin = node.radius + 50;
+      if (node.x < margin)          node.vx += (margin - node.x) * 0.1;
+      if (node.x > width - margin)  node.vx += (width - margin - node.x) * 0.1;
+      if (node.y < topMargin)       node.vy += (topMargin - node.y) * 0.1;
+      if (node.y > height - margin) node.vy += (height - margin - node.y) * 0.1;
+
+      /* Damping */
+      node.vx *= 0.88;
+      node.vy *= 0.88;
+
+      totalV += Math.abs(node.vx) + Math.abs(node.vy);
+
+      /* Update position */
+      node.x += node.vx;
+      node.y += node.vy;
+    }
+
+    updatePositions();
+
+    if (totalV < 0.1 && !expandedNode) {
+      settled = true;
+      running = false;
+      return;
+    }
+
+    requestAnimationFrame(simulate);
+  }
+
+  function updatePositions() {
+    for (var i = 0; i < nodes.length; i++) {
+      nodes[i].el.style.transform = 'translate(' + nodes[i].x.toFixed(1) + 'px,' + nodes[i].y.toFixed(1) + 'px) translate(-50%,-50%)';
+    }
+  }
+
+  function kick(alpha) {
+    settled = false;
+    if (!running) {
+      running = true;
+      requestAnimationFrame(simulate);
+    }
+    if (alpha) {
+      for (var i = 0; i < nodes.length; i++) {
+        nodes[i].vx += (Math.random() - 0.5) * alpha;
+        nodes[i].vy += (Math.random() - 0.5) * alpha;
+      }
+    }
+  }
+
+  /* ── Expand / Collapse ── */
+  function expand(node) {
+    if (expandedNode === node) {
+      collapseExpanded();
+      return;
+    }
+    if (expandedNode) collapseExpanded(true);
+
+    expandedNode = node;
+    node.expanded = true;
+    node.targetRadius = EXPANDED_R;
+    node.bubble.classList.add('expanded');
+    node.el.classList.add('is-expanded');
+    overlay.classList.add('active');
+
+    var nudgeX = (centerX - node.x) * 0.3;
+    var nudgeY = (centerY - node.y) * 0.3;
+    node.vx += nudgeX;
+    node.vy += nudgeY;
+
+    kick(1.5);
+  }
+
+  function collapseExpanded(silent) {
+    if (!expandedNode) return;
+    var node = expandedNode;
+    node.expanded = false;
+    node.targetRadius = NORMAL_R;
+    node.bubble.classList.remove('expanded');
+    node.el.classList.remove('is-expanded');
+    expandedNode = null;
+    if (!silent) overlay.classList.remove('active');
+    kick(0.5);
+  }
+
+  /* ── Events ── */
+  function attachEvents() {
+    nodes.forEach(function(node) {
+      node.bubble.addEventListener('click', function(e) {
+        e.stopPropagation();
+        expand(node);
+      });
+      node.bubble.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          expand(node);
+        }
+      });
+      if (hasHover) {
+        node.bubble.addEventListener('mouseenter', function() {
+          if (!node.expanded) {
+            node.targetRadius = HOVER_R;
+            kick(0.3);
+          }
+        });
+        node.bubble.addEventListener('mouseleave', function() {
+          if (!node.expanded) {
+            node.targetRadius = NORMAL_R;
+            kick(0.2);
+          }
+        });
+      }
+    });
+
+    overlay.addEventListener('click', function() {
+      collapseExpanded();
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') collapseExpanded();
+    });
+
+    var resizeTimer;
+    window.addEventListener('resize', function() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(handleResize, 200);
+    });
+  }
+
+  function handleResize() {
+    var rect = container.getBoundingClientRect();
+    var oldW = width, oldH = height;
+    width   = rect.width;
+    height  = rect.height;
+    centerX = width / 2;
+    centerY = height / 2;
+
+    calcSizes(width, height);
+    layoutCatCenters(width, height);
+    updateCatBubbles();
+
+    var scaleX = width / oldW;
+    var scaleY = height / oldH;
+    nodes.forEach(function(node) {
+      node.x *= scaleX;
+      node.y *= scaleY;
+      if (!node.expanded) node.targetRadius = NORMAL_R;
+    });
+
+    kick(0.8);
+  }
+
+  /* ── Start ── */
+  function init() {
+    initNodes();
+    attachEvents();
+    kick(2.5);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
