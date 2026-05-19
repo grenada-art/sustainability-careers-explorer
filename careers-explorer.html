@@ -130,6 +130,9 @@ html, body {
 .bw.is-expanded {
   z-index: 500;
 }
+.bw.card-moving {
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 
 /* ── Bubble ── */
 .bubble {
@@ -460,10 +463,21 @@ html, body {
     NORMAL_R = Math.max(24, Math.round(vmin / 15));
     HOVER_R = Math.round(NORMAL_R * 1.22);
     CAT_R = Math.max(24, Math.round(NORMAL_R * 0.7));
-    EXPANDED_R = Math.min(160, Math.round(NORMAL_R * 3.5));
     var bsize = NORMAL_R * 2;
-    var expW = Math.min(300, Math.max(240, Math.round(NORMAL_R * 5.5)));
-    var expH = Math.min(370, Math.max(300, Math.round(NORMAL_R * 7)));
+
+    var isMobile = w <= 600;
+    var expW, expH;
+    if (isMobile) {
+      expW = 240;
+      expH = 300;
+    } else {
+      // Scale up to 50% larger than minimum (240×300) on larger screens
+      expW = Math.min(360, Math.max(240, Math.round(NORMAL_R * 5.5)));
+      expH = Math.min(450, Math.max(300, Math.round(NORMAL_R * 7)));
+    }
+    // Physics radius: half card width + padding
+    EXPANDED_R = Math.max(NORMAL_R * 2, Math.round(expW / 2) + 10);
+
     document.documentElement.style.setProperty('--bubble-size', bsize + 'px');
     document.documentElement.style.setProperty('--expanded-w', expW + 'px');
     document.documentElement.style.setProperty('--expanded-h', expH + 'px');
@@ -621,6 +635,15 @@ html, body {
       /* Smooth radius transition */
       node.radius += (node.targetRadius - node.radius) * 0.12;
 
+      /* Expanded node: lock at viewport center, let physics push others away */
+      if (node.expanded) {
+        node.x = centerX;
+        node.y = centerY;
+        node.vx = 0;
+        node.vy = 0;
+        continue;
+      }
+
       /* Per-category center gravity */
       var cc = catCenters[node.career.cat];
       dx = cc.x - node.x;
@@ -706,6 +729,7 @@ html, body {
 
   function updatePositions() {
     for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].expanded) continue; // CSS transition owns this node's transform
       nodes[i].el.style.transform = 'translate(' + nodes[i].x.toFixed(1) + 'px,' + nodes[i].y.toFixed(1) + 'px) translate(-50%,-50%)';
     }
   }
@@ -735,14 +759,27 @@ html, body {
     expandedNode = node;
     node.expanded = true;
     node.targetRadius = EXPANDED_R;
+    node.vx = 0;
+    node.vy = 0;
     node.bubble.classList.add('expanded');
-    node.el.classList.add('is-expanded');
+    node.el.classList.add('is-expanded', 'card-moving');
     overlay.classList.add('active');
 
-    var nudgeX = (centerX - node.x) * 0.3;
-    var nudgeY = (centerY - node.y) * 0.3;
-    node.vx += nudgeX;
-    node.vy += nudgeY;
+    // Double rAF: let the browser register the current transform as the
+    // transition start point, then set the center target.
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        node.el.style.transform =
+          'translate(' + centerX.toFixed(1) + 'px,' + centerY.toFixed(1) + 'px) translate(-50%,-50%)';
+      });
+    });
+
+    // Remove the transition class once the fly-in completes
+    node.el.addEventListener('transitionend', function onEnd(e) {
+      if (e.target !== node.el || e.propertyName !== 'transform') return;
+      node.el.removeEventListener('transitionend', onEnd);
+      if (node.expanded) node.el.classList.remove('card-moving');
+    });
 
     kick(1.5);
   }
@@ -750,13 +787,16 @@ html, body {
   function collapseExpanded(silent) {
     if (!expandedNode) return;
     var node = expandedNode;
+    expandedNode = null;
     node.expanded = false;
     node.targetRadius = NORMAL_R;
     node.bubble.classList.remove('expanded');
-    node.el.classList.remove('is-expanded');
-    expandedNode = null;
+    // Remove both classes — card-moving transition ends here; physics takes over
+    node.el.classList.remove('is-expanded', 'card-moving');
     if (!silent) overlay.classList.remove('active');
-    kick(0.5);
+    // node.x/node.y = centerX/centerY (maintained by simulate while expanded).
+    // Cluster gravity now pulls the node back to its category center.
+    kick(1.5);
   }
 
   /* ── Events ── */
@@ -818,9 +858,17 @@ html, body {
     var scaleX = width / oldW;
     var scaleY = height / oldH;
     nodes.forEach(function(node) {
-      node.x *= scaleX;
-      node.y *= scaleY;
-      if (!node.expanded) node.targetRadius = NORMAL_R;
+      if (node.expanded) {
+        // Snap expanded card to new center immediately
+        node.x = centerX;
+        node.y = centerY;
+        node.el.style.transform =
+          'translate(' + centerX.toFixed(1) + 'px,' + centerY.toFixed(1) + 'px) translate(-50%,-50%)';
+      } else {
+        node.x *= scaleX;
+        node.y *= scaleY;
+        node.targetRadius = NORMAL_R;
+      }
     });
 
     kick(0.8);
