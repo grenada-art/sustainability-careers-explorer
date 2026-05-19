@@ -88,31 +88,24 @@ html, body {
   inset: 0;
 }
 
-/* ── Category Title Bubbles ── */
+/* ── Category Labels (floating text, no bubble) ── */
 .cat-bubble {
   position: absolute;
   left: 0;
   top: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   text-align: center;
-  border-radius: 50%;
-  background: rgba(240, 251, 244, 0.92);
-  border: 2px solid var(--green-300);
-  font-size: clamp(0.52rem, 1vw, 0.7rem);
+  font-size: clamp(0.9rem, 1.8vw, 1.4rem);
   font-weight: 700;
   color: var(--green-900);
+  opacity: 0.45;
   pointer-events: none;
   user-select: none;
-  z-index: 3;
+  z-index: 4;
   will-change: transform;
-  line-height: 1.15;
-  overflow: hidden;
-  padding: 4px;
+  line-height: 1.2;
   overflow-wrap: break-word;
+  word-break: break-word;
   transform: translate(-50%, -50%);
-  backdrop-filter: blur(2px);
 }
 
 /* ── Bubble Wrapper (positioned by JS) ── */
@@ -136,7 +129,7 @@ html, body {
   width: var(--bubble-size);
   height: var(--bubble-size);
   border-radius: 50%;
-  border: var(--border-w) solid var(--green-700);
+  border: var(--border-w) solid var(--cat-border, var(--green-700));
   overflow: hidden;
   cursor: pointer;
   background: var(--green-50);
@@ -155,7 +148,7 @@ html, body {
   width: var(--expanded-w);
   height: var(--expanded-h);
   border-radius: 18px;
-  border-color: var(--green-700);
+  border-color: var(--cat-border, var(--green-700));
   box-shadow: 0 12px 48px rgba(26, 86, 50, 0.22), 0 2px 12px rgba(0,0,0,0.08);
 }
 
@@ -337,7 +330,6 @@ html, body {
     font-size: 0.7rem;
   }
   .bubble-content h3 { font-size: 0.82rem; }
-  .cat-bubble { font-size: 0.38rem; }
 }
 
 /* ── Accessibility ── */
@@ -447,6 +439,16 @@ html, body {
     computing:      'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)'
   };
 
+  /* Border colours per category (user-specified light tones) */
+  var catColors = {
+    energy:         '#fde68a',  // light yellow
+    water:          '#bae6fd',  // light blue
+    food:           '#bbf7d0',  // light green
+    buildings:      '#fbcfe8',  // light pink
+    transportation: '#ddd6fe',  // light purple
+    computing:      '#fecaca'   // light red
+  };
+
   /* ── Dynamic Sizing ── */
   var NORMAL_R, HOVER_R, CAT_R, EXPANDED_R, PAD = 3;
   var catCenters = {};
@@ -504,31 +506,28 @@ html, body {
   var lastInteractionTime = 0;
   var hoverCount = 0;
   var IDLE_DELAY = 3500;      // ms before idle rotation begins
-  var ROTATION_SPEED = 0.002; // radians per frame (~52 s per full revolution at 60 fps)
+  var ROTATION_SPEED = 0.001; // radians per frame (~105 s per full revolution at 60 fps)
   var container = document.getElementById('bubble-container');
   var overlay   = document.getElementById('overlay');
 
-  /* ── Create Category Title Bubbles ── */
+  /* ── Create Category Labels (text-only, no circle) ── */
   function createCatBubbles() {
     CAT_ORDER.forEach(function(cat) {
       var el = document.createElement('div');
       el.className = 'cat-bubble';
       el.textContent = CAT_LABELS[cat];
-      var size = CAT_R * 2;
-      el.style.width = size + 'px';
-      el.style.height = size + 'px';
       container.appendChild(el);
       catBubbleEls[cat] = el;
     });
   }
 
   function updateCatBubbles() {
+    /* Constrain label width to ~cluster diameter so it doesn't bleed outside */
+    var maxW = Math.round(NORMAL_R * 5) + 'px';
     CAT_ORDER.forEach(function(cat) {
       var cc = catCenters[cat];
       var el = catBubbleEls[cat];
-      var size = CAT_R * 2;
-      el.style.width = size + 'px';
-      el.style.height = size + 'px';
+      el.style.maxWidth = maxW;
       el.style.transform = 'translate(' + cc.x.toFixed(0) + 'px,' + cc.y.toFixed(0) + 'px) translate(-50%, -50%)';
     });
   }
@@ -545,6 +544,9 @@ html, body {
     bubble.setAttribute('tabindex', '0');
     bubble.setAttribute('aria-label', career.title);
     bubble.style.animationDelay = (index * 0.13 % 5).toFixed(2) + 's';
+
+    /* Stamp the category border colour so CSS can reference it */
+    bubble.style.setProperty('--cat-border', catColors[career.cat] || '#b0b0bc');
 
     var img = document.createElement('img');
     img.className = 'bubble-img';
