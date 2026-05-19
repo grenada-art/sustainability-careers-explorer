@@ -94,7 +94,7 @@ html, body {
   left: 0;
   top: 0;
   text-align: center;
-  font-size: clamp(0.9rem, 1.8vw, 1.4rem);
+  font-size: clamp(1.1rem, 2.5vw, 2rem);
   font-weight: 700;
   color: var(--green-900);
   opacity: 0.45;
@@ -106,6 +106,10 @@ html, body {
   overflow-wrap: break-word;
   word-break: break-word;
   transform: translate(-50%, -50%);
+  transition: opacity 0.3s ease;
+}
+.cat-bubble.cat-hidden {
+  opacity: 0;
 }
 
 /* ── Bubble Wrapper (positioned by JS) ── */
@@ -446,7 +450,7 @@ html, body {
     food:           '#bbf7d0',  // light green
     buildings:      '#fbcfe8',  // light pink
     transportation: '#ddd6fe',  // light purple
-    computing:      '#fecaca'   // light red
+    computing:      '#f87171'   // saturated red
   };
 
   /* ── Dynamic Sizing ── */
@@ -505,6 +509,7 @@ html, body {
   var rotationOffset = 0;
   var lastInteractionTime = 0;
   var hoverCount = 0;
+  var catHoverCount = {}; // per-category hover counter for label visibility
   var IDLE_DELAY = 3500;      // ms before idle rotation begins
   var ROTATION_SPEED = 0.001; // radians per frame (~105 s per full revolution at 60 fps)
   var container = document.getElementById('bubble-container');
@@ -522,8 +527,8 @@ html, body {
   }
 
   function updateCatBubbles() {
-    /* Constrain label width to ~cluster diameter so it doesn't bleed outside */
-    var maxW = Math.round(NORMAL_R * 5) + 'px';
+    /* Constrain label width to cluster diameter (bubbles sit ~3 radii out) */
+    var maxW = Math.round(NORMAL_R * 6) + 'px';
     CAT_ORDER.forEach(function(cat) {
       var cc = catCenters[cat];
       var el = catBubbleEls[cat];
@@ -775,6 +780,7 @@ html, body {
     node.bubble.classList.add('expanded');
     node.el.classList.add('is-expanded', 'card-moving');
     overlay.classList.add('active');
+    setCatLabelVisible(node.career.cat, false);
 
     // Double rAF: let the browser register the current transform as the
     // transition start point, then set the center target.
@@ -798,6 +804,7 @@ html, body {
   function collapseExpanded(silent) {
     if (!expandedNode) return;
     var node = expandedNode;
+    var cat = node.career.cat;
     expandedNode = null;
     node.expanded = false;
     node.targetRadius = NORMAL_R;
@@ -805,9 +812,22 @@ html, body {
     // Remove both classes — card-moving transition ends here; physics takes over
     node.el.classList.remove('is-expanded', 'card-moving');
     if (!silent) overlay.classList.remove('active');
+    // Restore category label unless the user is still hovering that cluster
+    if (catHoverCount[cat] === 0) setCatLabelVisible(cat, true);
     // node.x/node.y = centerX/centerY (maintained by simulate while expanded).
     // Cluster gravity now pulls the node back to its category center.
     kick(1.5);
+  }
+
+  /* ── Category Label Visibility ── */
+  function setCatLabelVisible(cat, visible) {
+    var el = catBubbleEls[cat];
+    if (!el) return;
+    if (visible) {
+      el.classList.remove('cat-hidden');
+    } else {
+      el.classList.add('cat-hidden');
+    }
   }
 
   /* ── Events ── */
@@ -816,6 +836,8 @@ html, body {
   }
 
   function attachEvents() {
+    /* Initialise per-category hover counters */
+    CAT_ORDER.forEach(function(cat) { catHoverCount[cat] = 0; });
     nodes.forEach(function(node) {
       node.bubble.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -832,7 +854,9 @@ html, body {
       if (hasHover) {
         node.bubble.addEventListener('mouseenter', function() {
           hoverCount++;
+          catHoverCount[node.career.cat]++;
           markInteraction();
+          setCatLabelVisible(node.career.cat, false);
           if (!node.expanded) {
             node.targetRadius = HOVER_R;
             kick(0.3);
@@ -840,7 +864,13 @@ html, body {
         });
         node.bubble.addEventListener('mouseleave', function() {
           hoverCount = Math.max(0, hoverCount - 1);
+          catHoverCount[node.career.cat] = Math.max(0, catHoverCount[node.career.cat] - 1);
           markInteraction();
+          /* Restore label only if no other bubble in this cat is hovered
+             and no card from this cat is open */
+          var catStillActive = catHoverCount[node.career.cat] > 0 ||
+            (expandedNode && expandedNode.career.cat === node.career.cat);
+          if (!catStillActive) setCatLabelVisible(node.career.cat, true);
           if (!node.expanded) {
             node.targetRadius = NORMAL_R;
             kick(0.2);
