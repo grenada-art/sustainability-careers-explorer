@@ -60,30 +60,26 @@ html, body {
   touch-action: pan-y;
 }
 
-/* ── Header ── */
+/* ── Header — centered watermark title ── */
 #header {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  text-align: center;
-  padding: 18px 20px 28px;
-  z-index: 200;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
   pointer-events: none;
   user-select: none;
 }
 #header h1 {
-  font-size: clamp(1.1rem, 2.5vw, 1.6rem);
-  font-weight: 700;
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-weight: 800;
   color: var(--green-900);
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-#header p {
-  font-size: clamp(0.72rem, 1.4vw, 0.88rem);
-  color: var(--neutral-700);
-  margin-top: 4px;
-  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  text-align: center;
+  opacity: 0.15;
+  max-width: 9em; /* forces ~3 stacked lines: Sustainable / Technology / Careers */
 }
 
 /* ── Bubble Container ── */
@@ -334,7 +330,6 @@ html, body {
 
 /* ── Mobile ── */
 @media (max-width: 600px) {
-  #header { padding: 12px 16px 20px; }
   .bubble-name { display: none; }
   .bubble.expanded .bubble-img { height: 100px; }
   .bubble-content .desc {
@@ -483,14 +478,15 @@ html, body {
     document.documentElement.style.setProperty('--expanded-h', expH + 'px');
   }
 
-  function layoutCatCenters(w, h) {
+  function layoutCatCenters(w, h, angleOffset) {
     var cx = w / 2;
     var cy = h / 2;
     var rx = w * 0.38;
     var ry = h * 0.36;
     var n = CAT_ORDER.length;
+    var offset = angleOffset || 0;
     CAT_ORDER.forEach(function(cat, i) {
-      var angle = (2 * Math.PI * i / n) - Math.PI / 2;
+      var angle = (2 * Math.PI * i / n) - Math.PI / 2 + offset;
       catCenters[cat] = {
         x: cx + rx * Math.cos(angle),
         y: cy + ry * Math.sin(angle)
@@ -504,6 +500,11 @@ html, body {
   var running = false;
   var settled = false;
   var width, height, centerX, centerY;
+  var rotationOffset = 0;
+  var lastInteractionTime = 0;
+  var hoverCount = 0;
+  var IDLE_DELAY = 3500;      // ms before idle rotation begins
+  var ROTATION_SPEED = 0.002; // radians per frame (~52 s per full revolution at 60 fps)
   var container = document.getElementById('bubble-container');
   var overlay   = document.getElementById('overlay');
 
@@ -609,7 +610,7 @@ html, body {
 
       var n = createBubble(career, i);
       n.x  = Math.max(NORMAL_R, Math.min(width - NORMAL_R, x));
-      n.y  = Math.max(NORMAL_R + 50, Math.min(height - NORMAL_R, y));
+      n.y  = Math.max(NORMAL_R, Math.min(height - NORMAL_R, y));
       n.vx = 0;
       n.vy = 0;
       n.radius = NORMAL_R;
@@ -624,6 +625,15 @@ html, body {
   /* ── Physics ── */
   function simulate() {
     if (!running) return;
+
+    /* Idle rotation: advance cluster angle when no user activity */
+    var now = Date.now();
+    var isIdling = !expandedNode && hoverCount === 0 && (now - lastInteractionTime > IDLE_DELAY);
+    if (isIdling) {
+      rotationOffset += ROTATION_SPEED;
+      layoutCatCenters(width, height, rotationOffset);
+      updateCatBubbles();
+    }
 
     var totalV = 0;
     var i, j, node, other, dx, dy, dist, minDist, force, nx, ny;
@@ -699,10 +709,9 @@ html, body {
 
       /* Boundary */
       var margin = node.radius + 4;
-      var topMargin = node.radius + 50;
       if (node.x < margin)          node.vx += (margin - node.x) * 0.1;
       if (node.x > width - margin)  node.vx += (width - margin - node.x) * 0.1;
-      if (node.y < topMargin)       node.vy += (topMargin - node.y) * 0.1;
+      if (node.y < margin)          node.vy += (margin - node.y) * 0.1;
       if (node.y > height - margin) node.vy += (height - margin - node.y) * 0.1;
 
       /* Damping */
@@ -718,7 +727,7 @@ html, body {
 
     updatePositions();
 
-    if (totalV < 0.1 && !expandedNode) {
+    if (totalV < 0.1 && !expandedNode && !isIdling) {
       settled = true;
       running = false;
       return;
@@ -800,26 +809,36 @@ html, body {
   }
 
   /* ── Events ── */
+  function markInteraction() {
+    lastInteractionTime = Date.now();
+  }
+
   function attachEvents() {
     nodes.forEach(function(node) {
       node.bubble.addEventListener('click', function(e) {
         e.stopPropagation();
+        markInteraction();
         expand(node);
       });
       node.bubble.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
+          markInteraction();
           expand(node);
         }
       });
       if (hasHover) {
         node.bubble.addEventListener('mouseenter', function() {
+          hoverCount++;
+          markInteraction();
           if (!node.expanded) {
             node.targetRadius = HOVER_R;
             kick(0.3);
           }
         });
         node.bubble.addEventListener('mouseleave', function() {
+          hoverCount = Math.max(0, hoverCount - 1);
+          markInteraction();
           if (!node.expanded) {
             node.targetRadius = NORMAL_R;
             kick(0.2);
@@ -829,18 +848,31 @@ html, body {
     });
 
     overlay.addEventListener('click', function() {
+      markInteraction();
       collapseExpanded();
     });
 
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') collapseExpanded();
+      if (e.key === 'Escape') { markInteraction(); collapseExpanded(); }
     });
+
+    container.addEventListener('touchstart', function() { markInteraction(); }, { passive: true });
 
     var resizeTimer;
     window.addEventListener('resize', function() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(handleResize, 200);
     });
+  }
+
+  /* ── Idle Checker — restarts simulation when rotation becomes due ── */
+  function idleChecker() {
+    var now = Date.now();
+    var shouldRotate = !expandedNode && hoverCount === 0 && (now - lastInteractionTime > IDLE_DELAY);
+    if (shouldRotate && !running) {
+      kick(0); // restart physics loop; simulate() will advance rotationOffset
+    }
+    requestAnimationFrame(idleChecker);
   }
 
   function handleResize() {
@@ -876,9 +908,11 @@ html, body {
 
   /* ── Start ── */
   function init() {
+    lastInteractionTime = Date.now(); // prevent rotation on cold start
     initNodes();
     attachEvents();
     kick(2.5);
+    requestAnimationFrame(idleChecker);
   }
 
   if (document.readyState === 'loading') {
