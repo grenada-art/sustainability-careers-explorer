@@ -344,7 +344,7 @@ html, body {
 /* ── Category Filter Buttons ── */
 #cat-filters {
   position: absolute;
-  bottom: 20px;
+  top: 20px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -592,6 +592,7 @@ html, body {
   var IDLE_DELAY = 3500;      // ms before idle rotation begins
   var ROTATION_SPEED = 0.001; // radians per frame (~105 s per full revolution at 60 fps)
   var filterCat = null;
+  var filterNormalR = null; // enlarged bubble radius while filter is active
   var container = document.getElementById('bubble-container');
   var overlay   = document.getElementById('overlay');
 
@@ -905,7 +906,7 @@ html, body {
     var cat = node.career.cat;
     expandedNode = null;
     node.expanded = false;
-    node.targetRadius = NORMAL_R;
+    node.targetRadius = filterNormalR !== null ? filterNormalR : NORMAL_R;
     node.bubble.classList.remove('expanded');
     // Remove both classes — card-moving transition ends here; physics takes over
     node.el.classList.remove('is-expanded', 'card-moving');
@@ -955,12 +956,23 @@ html, body {
     if (filterCat) {
       var fillR = Math.min(width, height) * 0.36;
       var visibleNodes = nodes.filter(function(n) { return !n.hidden; });
+      /* Scale bubbles up to fill the ring efficiently */
+      filterNormalR = Math.max(NORMAL_R, Math.min(NORMAL_R * 3,
+        Math.round(Math.PI * fillR / (visibleNodes.length * 1.3))));
+      document.documentElement.style.setProperty('--bubble-size', (filterNormalR * 2) + 'px');
       visibleNodes.forEach(function(node, i) {
+        node.targetRadius = filterNormalR;
         var angle = (2 * Math.PI * i / visibleNodes.length) - Math.PI / 2;
         var tx = centerX + fillR * Math.cos(angle);
         var ty = centerY + fillR * Math.sin(angle);
         node.vx += (tx - node.x) * 0.12;
         node.vy += (ty - node.y) * 0.12;
+      });
+    } else {
+      filterNormalR = null;
+      document.documentElement.style.setProperty('--bubble-size', (NORMAL_R * 2) + 'px');
+      nodes.forEach(function(n) {
+        if (!n.expanded) n.targetRadius = NORMAL_R;
       });
     }
 
@@ -1009,7 +1021,7 @@ html, body {
           markInteraction();
           setCatLabelVisible(node.career.cat, false);
           if (!node.expanded) {
-            node.targetRadius = HOVER_R;
+            node.targetRadius = filterNormalR !== null ? Math.round(filterNormalR * 1.22) : HOVER_R;
             kick(0.3);
           }
         });
@@ -1023,7 +1035,7 @@ html, body {
             (expandedNode && expandedNode.career.cat === node.career.cat);
           if (!catStillActive && !filterCat) setCatLabelVisible(node.career.cat, true);
           if (!node.expanded) {
-            node.targetRadius = NORMAL_R;
+            node.targetRadius = filterNormalR !== null ? filterNormalR : NORMAL_R;
             kick(0.2);
           }
         });
@@ -1074,6 +1086,15 @@ html, body {
     layoutCatCenters(width, height);
     updateCatBubbles();
 
+    /* Recompute filter radius after resize since viewport dims changed */
+    if (filterCat) {
+      var fillR = Math.min(width, height) * 0.36;
+      var visN = nodes.filter(function(n) { return !n.hidden; }).length;
+      filterNormalR = Math.max(NORMAL_R, Math.min(NORMAL_R * 3,
+        Math.round(Math.PI * fillR / (visN * 1.3))));
+      document.documentElement.style.setProperty('--bubble-size', (filterNormalR * 2) + 'px');
+    }
+
     var scaleX = width / oldW;
     var scaleY = height / oldH;
     nodes.forEach(function(node) {
@@ -1086,7 +1107,7 @@ html, body {
       } else {
         node.x *= scaleX;
         node.y *= scaleY;
-        node.targetRadius = NORMAL_R;
+        node.targetRadius = filterNormalR !== null && !node.hidden ? filterNormalR : NORMAL_R;
       }
     });
 
