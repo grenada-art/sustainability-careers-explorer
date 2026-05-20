@@ -665,7 +665,7 @@ html, body {
     nameOverlay.className = 'bubble-name';
     nameOverlay.textContent = career.title;
     /* Initial font size — will be refreshed via updateAllNameFontSizes() */
-    nameOverlay.style.fontSize = calcNameFontSize(NORMAL_R, career.title.length) + 'px';
+    nameOverlay.style.fontSize = calcNameFontSize(NORMAL_R, career.title) + 'px';
 
     bubble.appendChild(img);
     bubble.appendChild(nameOverlay);
@@ -936,17 +936,24 @@ html, body {
   }
 
   /* ── Bubble Name Font Sizing ── */
-  function calcNameFontSize(r, charCount) {
+  function calcNameFontSize(r, title) {
     /* Scale with bubble radius; shrink for longer titles.
        Cap at r*0.35 so short names don't overflow the circle. */
-    var fs = Math.min(r * 0.35, r * 1.4 / Math.sqrt(charCount));
-    return Math.max(8, Math.round(fs * 10) / 10);
+    var fs = Math.min(r * 0.35, r * 1.4 / Math.sqrt(title.length));
+    /* Prevent mid-word line breaks: the longest word must fit on one line.
+       Effective content width = diameter minus 6% padding each side. */
+    var effectiveW = r * 2 * 0.88;
+    var longestWordLen = title.split(' ').reduce(function(max, w) {
+      return Math.max(max, w.length);
+    }, 0);
+    var maxFs = effectiveW / (longestWordLen * 0.55);
+    return Math.max(8, Math.round(Math.min(fs, maxFs) * 10) / 10);
   }
 
   function updateAllNameFontSizes() {
     nodes.forEach(function(node) {
       var r = (filterNormalR !== null && !node.hidden) ? filterNormalR : NORMAL_R;
-      node.nameEl.style.fontSize = calcNameFontSize(r, node.career.title.length) + 'px';
+      node.nameEl.style.fontSize = calcNameFontSize(r, node.career.title) + 'px';
     });
   }
 
