@@ -271,7 +271,6 @@ html, body {
   justify-content: center;
   text-align: center;
   padding: 6%;
-  font-size: clamp(0.7rem, 1.4vw, 0.95rem);
   font-weight: 600;
   color: #fff;
   background: rgba(26, 86, 50, 0.6);
@@ -665,6 +664,8 @@ html, body {
     var nameOverlay = document.createElement('span');
     nameOverlay.className = 'bubble-name';
     nameOverlay.textContent = career.title;
+    /* Initial font size — will be refreshed via updateAllNameFontSizes() */
+    nameOverlay.style.fontSize = calcNameFontSize(NORMAL_R, career.title.length) + 'px';
 
     bubble.appendChild(img);
     bubble.appendChild(nameOverlay);
@@ -673,7 +674,7 @@ html, body {
     wrapper.appendChild(bubble);
     container.appendChild(wrapper);
 
-    return { el: wrapper, bubble: bubble, career: career };
+    return { el: wrapper, bubble: bubble, career: career, nameEl: nameOverlay };
   }
 
   /* ── Initialize Nodes ── */
@@ -934,6 +935,21 @@ html, body {
     }
   }
 
+  /* ── Bubble Name Font Sizing ── */
+  function calcNameFontSize(r, charCount) {
+    /* Scale with bubble radius; shrink for longer titles.
+       Cap at r*0.35 so short names don't overflow the circle. */
+    var fs = Math.min(r * 0.35, r * 1.4 / Math.sqrt(charCount));
+    return Math.max(8, Math.round(fs * 10) / 10);
+  }
+
+  function updateAllNameFontSizes() {
+    nodes.forEach(function(node) {
+      var r = (filterNormalR !== null && !node.hidden) ? filterNormalR : NORMAL_R;
+      node.nameEl.style.fontSize = calcNameFontSize(r, node.career.title.length) + 'px';
+    });
+  }
+
   /* ── Category Filter ── */
   function setFilter(cat) {
     markInteraction();
@@ -973,12 +989,14 @@ html, body {
         node.vx += (tx - node.x) * 0.12;
         node.vy += (ty - node.y) * 0.12;
       });
+      updateAllNameFontSizes();
     } else {
       filterNormalR = null;
       document.documentElement.style.setProperty('--bubble-size', (NORMAL_R * 2) + 'px');
       nodes.forEach(function(n) {
         if (!n.expanded) n.targetRadius = NORMAL_R;
       });
+      updateAllNameFontSizes();
     }
 
     document.querySelectorAll('.cat-filter-btn').forEach(function(btn) {
@@ -1116,6 +1134,7 @@ html, body {
       }
     });
 
+    updateAllNameFontSizes();
     kick(0.8);
   }
 
