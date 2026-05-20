@@ -119,12 +119,17 @@ html, body {
   top: 0;
   z-index: 1;
   will-change: transform;
+  transition: opacity 0.4s ease;
 }
 .bw.is-expanded {
   z-index: 500;
 }
 .bw.card-moving {
-  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+}
+.bw.is-hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* ── Bubble ── */
@@ -336,6 +341,60 @@ html, body {
   .bubble-content h3 { font-size: 0.82rem; }
 }
 
+/* ── Category Filter Buttons ── */
+#cat-filters {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 450;
+  padding: 8px 12px;
+  background: rgba(240, 251, 244, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 100px;
+  border: 1.5px solid rgba(26, 86, 50, 0.18);
+  box-shadow: 0 4px 20px rgba(26, 86, 50, 0.13);
+}
+.cat-filter-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--green-300);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--green-700);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+.cat-filter-btn svg {
+  width: 55%;
+  height: 55%;
+  display: block;
+  pointer-events: none;
+}
+.cat-filter-btn:hover {
+  background: var(--green-50);
+  border-color: var(--green-500);
+  transform: scale(1.08);
+}
+.cat-filter-btn.active {
+  background: var(--green-700);
+  border-color: var(--green-700);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(26, 86, 50, 0.32);
+}
+.cat-filter-btn.active:hover {
+  background: var(--green-900);
+  border-color: var(--green-900);
+}
+
 /* ── Accessibility ── */
 .bubble:focus-visible {
   outline: 3px solid var(--green-500);
@@ -357,6 +416,26 @@ html, body {
   </header>
   <div id="overlay"></div>
   <div id="bubble-container"></div>
+  <div id="cat-filters">
+    <button class="cat-filter-btn" data-cat="energy" aria-label="Filter: Energy" title="Energy">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    </button>
+    <button class="cat-filter-btn" data-cat="water" aria-label="Filter: Water" title="Water">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+    </button>
+    <button class="cat-filter-btn" data-cat="food" aria-label="Filter: Food" title="Food">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg>
+    </button>
+    <button class="cat-filter-btn" data-cat="buildings" aria-label="Filter: Buildings" title="Buildings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </button>
+    <button class="cat-filter-btn" data-cat="transportation" aria-label="Filter: Transportation" title="Transportation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="9" width="20" height="9" rx="2"/><path d="M7 9V7l3-3h4l3 3v2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+    </button>
+    <button class="cat-filter-btn" data-cat="computing" aria-label="Filter: Computing" title="Computing">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+    </button>
+  </div>
 </div>
 
 <script>
@@ -512,6 +591,7 @@ html, body {
   var catHoverCount = {}; // per-category hover counter for label visibility
   var IDLE_DELAY = 3500;      // ms before idle rotation begins
   var ROTATION_SPEED = 0.001; // radians per frame (~105 s per full revolution at 60 fps)
+  var filterCat = null;
   var container = document.getElementById('bubble-container');
   var overlay   = document.getElementById('overlay');
 
@@ -623,6 +703,7 @@ html, body {
       n.radius = NORMAL_R;
       n.targetRadius = NORMAL_R;
       n.expanded = false;
+      n.hidden = false;
       return n;
     });
 
@@ -635,7 +716,7 @@ html, body {
 
     /* Idle rotation: advance cluster angle when no user activity */
     var now = Date.now();
-    var isIdling = !expandedNode && hoverCount === 0 && (now - lastInteractionTime > IDLE_DELAY);
+    var isIdling = !expandedNode && hoverCount === 0 && !filterCat && (now - lastInteractionTime > IDLE_DELAY);
     if (isIdling) {
       rotationOffset += ROTATION_SPEED;
       layoutCatCenters(width, height, rotationOffset);
@@ -661,22 +742,37 @@ html, body {
         continue;
       }
 
-      /* Per-category center gravity */
-      var cc = catCenters[node.career.cat];
-      dx = cc.x - node.x;
-      dy = cc.y - node.y;
-      node.vx += dx * 0.0012;
-      node.vy += dy * 0.0012;
+      /* Hidden node (filter mode): skip all physics */
+      if (node.hidden) continue;
 
-      /* Weak global center pull (keeps everything from drifting) */
-      dx = centerX - node.x;
-      dy = centerY - node.y;
-      node.vx += dx * 0.00008;
-      node.vy += dy * 0.00008;
+      if (filterCat) {
+        /* Ring attraction: pull nodes toward a ring at ~36% of viewport min-dim */
+        var fillR = Math.min(width, height) * 0.36;
+        dx = node.x - centerX;
+        dy = node.y - centerY;
+        dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
+        var radErr = dist - fillR;
+        node.vx -= (dx / dist) * radErr * 0.003;
+        node.vy -= (dy / dist) * radErr * 0.003;
+      } else {
+        /* Per-category center gravity */
+        var cc = catCenters[node.career.cat];
+        dx = cc.x - node.x;
+        dy = cc.y - node.y;
+        node.vx += dx * 0.0012;
+        node.vy += dy * 0.0012;
+
+        /* Weak global center pull (keeps everything from drifting) */
+        dx = centerX - node.x;
+        dy = centerY - node.y;
+        node.vx += dx * 0.00008;
+        node.vy += dy * 0.00008;
+      }
 
       /* Collision + repulsion */
       for (j = i + 1; j < len; j++) {
         other = nodes[j];
+        if (other.hidden) continue;
         dx = node.x - other.x;
         dy = node.y - other.y;
         dist = Math.sqrt(dx * dx + dy * dy);
@@ -697,20 +793,22 @@ html, body {
         }
       }
 
-      /* Category bubble collision (fixed position, push career nodes away) */
-      var catKeys = CAT_ORDER;
-      for (j = 0; j < catKeys.length; j++) {
-        var ccPos = catCenters[catKeys[j]];
-        dx = node.x - ccPos.x;
-        dy = node.y - ccPos.y;
-        dist = Math.sqrt(dx * dx + dy * dy);
-        minDist = node.radius + CAT_R + PAD;
-        if (dist < minDist && dist > 0.1) {
-          nx = dx / dist;
-          ny = dy / dist;
-          force = (minDist - dist) / dist * 0.4;
-          node.vx += nx * force;
-          node.vy += ny * force;
+      /* Category bubble collision — only when not filtering (labels are hidden) */
+      if (!filterCat) {
+        var catKeys = CAT_ORDER;
+        for (j = 0; j < catKeys.length; j++) {
+          var ccPos = catCenters[catKeys[j]];
+          dx = node.x - ccPos.x;
+          dy = node.y - ccPos.y;
+          dist = Math.sqrt(dx * dx + dy * dy);
+          minDist = node.radius + CAT_R + PAD;
+          if (dist < minDist && dist > 0.1) {
+            nx = dx / dist;
+            ny = dy / dist;
+            force = (minDist - dist) / dist * 0.4;
+            node.vx += nx * force;
+            node.vy += ny * force;
+          }
         }
       }
 
@@ -813,7 +911,7 @@ html, body {
     node.el.classList.remove('is-expanded', 'card-moving');
     if (!silent) overlay.classList.remove('active');
     // Restore category label unless the user is still hovering that cluster
-    if (catHoverCount[cat] === 0) setCatLabelVisible(cat, true);
+    if (catHoverCount[cat] === 0 && !filterCat) setCatLabelVisible(cat, true);
     // node.x/node.y = centerX/centerY (maintained by simulate while expanded).
     // Cluster gravity now pulls the node back to its category center.
     kick(1.5);
@@ -828,6 +926,59 @@ html, body {
     } else {
       el.classList.add('cat-hidden');
     }
+  }
+
+  /* ── Category Filter ── */
+  function setFilter(cat) {
+    markInteraction();
+
+    if (filterCat === cat) {
+      filterCat = null;
+    } else {
+      if (expandedNode && expandedNode.career.cat !== cat) {
+        collapseExpanded(true);
+        overlay.classList.remove('active');
+      }
+      filterCat = cat;
+    }
+
+    nodes.forEach(function(node) {
+      node.hidden = filterCat !== null && node.career.cat !== filterCat;
+      if (node.hidden) {
+        node.el.classList.add('is-hidden');
+      } else {
+        node.el.classList.remove('is-hidden');
+      }
+    });
+
+    /* Disperse visible nodes to evenly-spaced positions around the ring */
+    if (filterCat) {
+      var fillR = Math.min(width, height) * 0.36;
+      var visibleNodes = nodes.filter(function(n) { return !n.hidden; });
+      visibleNodes.forEach(function(node, i) {
+        var angle = (2 * Math.PI * i / visibleNodes.length) - Math.PI / 2;
+        var tx = centerX + fillR * Math.cos(angle);
+        var ty = centerY + fillR * Math.sin(angle);
+        node.vx += (tx - node.x) * 0.12;
+        node.vy += (ty - node.y) * 0.12;
+      });
+    }
+
+    document.querySelectorAll('.cat-filter-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.dataset.cat === filterCat);
+    });
+
+    CAT_ORDER.forEach(function(c) {
+      if (filterCat) {
+        setCatLabelVisible(c, false);
+      } else {
+        var labelVisible = catHoverCount[c] === 0 &&
+          !(expandedNode && expandedNode.career.cat === c);
+        setCatLabelVisible(c, labelVisible);
+      }
+    });
+
+    kick(2);
   }
 
   /* ── Events ── */
@@ -870,7 +1021,7 @@ html, body {
              and no card from this cat is open */
           var catStillActive = catHoverCount[node.career.cat] > 0 ||
             (expandedNode && expandedNode.career.cat === node.career.cat);
-          if (!catStillActive) setCatLabelVisible(node.career.cat, true);
+          if (!catStillActive && !filterCat) setCatLabelVisible(node.career.cat, true);
           if (!node.expanded) {
             node.targetRadius = NORMAL_R;
             kick(0.2);
@@ -890,6 +1041,10 @@ html, body {
 
     container.addEventListener('touchstart', function() { markInteraction(); }, { passive: true });
 
+    document.querySelectorAll('.cat-filter-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() { setFilter(btn.dataset.cat); });
+    });
+
     var resizeTimer;
     window.addEventListener('resize', function() {
       clearTimeout(resizeTimer);
@@ -900,7 +1055,7 @@ html, body {
   /* ── Idle Checker — restarts simulation when rotation becomes due ── */
   function idleChecker() {
     var now = Date.now();
-    var shouldRotate = !expandedNode && hoverCount === 0 && (now - lastInteractionTime > IDLE_DELAY);
+    var shouldRotate = !expandedNode && hoverCount === 0 && !filterCat && (now - lastInteractionTime > IDLE_DELAY);
     if (shouldRotate && !running) {
       kick(0); // restart physics loop; simulate() will advance rotationOffset
     }
