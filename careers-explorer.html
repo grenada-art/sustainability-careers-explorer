@@ -94,10 +94,10 @@ html, body {
   left: 0;
   top: 0;
   text-align: center;
-  font-size: clamp(1.1rem, 2.5vw, 2rem);
+  font-size: clamp(1.4rem, 3vw, 2.5rem);
   font-weight: 700;
   color: var(--green-900);
-  opacity: 0.45;
+  opacity: 0.65;
   pointer-events: none;
   user-select: none;
   z-index: 4;
@@ -271,7 +271,7 @@ html, body {
   justify-content: center;
   text-align: center;
   padding: 6%;
-  font-size: clamp(0.58rem, 1.1vw, 0.8rem);
+  font-size: clamp(0.7rem, 1.4vw, 0.95rem);
   font-weight: 600;
   color: #fff;
   background: rgba(26, 86, 50, 0.6);
@@ -590,7 +590,7 @@ html, body {
   var hoverCount = 0;
   var catHoverCount = {}; // per-category hover counter for label visibility
   var IDLE_DELAY = 3500;      // ms before idle rotation begins
-  var ROTATION_SPEED = 0.001; // radians per frame (~105 s per full revolution at 60 fps)
+  var ROTATION_SPEED = 0.0007; // radians per frame (~150 s per full revolution at 60 fps)
   var filterCat = null;
   var filterNormalR = null; // enlarged bubble radius while filter is active
   var container = document.getElementById('bubble-container');
@@ -717,8 +717,8 @@ html, body {
 
     /* Idle rotation: advance cluster angle when no user activity */
     var now = Date.now();
-    var isIdling = !expandedNode && hoverCount === 0 && !filterCat && (now - lastInteractionTime > IDLE_DELAY);
-    if (isIdling) {
+    var isIdling = !expandedNode && hoverCount === 0 && (now - lastInteractionTime > IDLE_DELAY);
+    if (isIdling && !filterCat) {
       rotationOffset += ROTATION_SPEED;
       layoutCatCenters(width, height, rotationOffset);
       updateCatBubbles();
@@ -755,6 +755,11 @@ html, body {
         var radErr = dist - fillR;
         node.vx -= (dx / dist) * radErr * 0.003;
         node.vy -= (dy / dist) * radErr * 0.003;
+        /* Idle orbital rotation: tangential nudge to orbit the ring clockwise */
+        if (isIdling) {
+          node.vx -= dy * ROTATION_SPEED * 0.12;
+          node.vy += dx * ROTATION_SPEED * 0.12;
+        }
       } else {
         /* Per-category center gravity */
         var cc = catCenters[node.career.cat];
@@ -1067,7 +1072,7 @@ html, body {
   /* ── Idle Checker — restarts simulation when rotation becomes due ── */
   function idleChecker() {
     var now = Date.now();
-    var shouldRotate = !expandedNode && hoverCount === 0 && !filterCat && (now - lastInteractionTime > IDLE_DELAY);
+    var shouldRotate = !expandedNode && hoverCount === 0 && (now - lastInteractionTime > IDLE_DELAY);
     if (shouldRotate && !running) {
       kick(0); // restart physics loop; simulate() will advance rotationOffset
     }
